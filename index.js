@@ -30,20 +30,51 @@
 //this works!  Sizing is not working from the request, but I'm brute forcing it with css.
 //If I could get a bunch of random words related to a search term, the user could just type their own themes!
 //Need to add who the photo is by and allow user to download it if they want (unsplash terms)
-function newBackground(theme){
-    return fetch(`https://api.unsplash.com/photos/random?query=${theme}&w=1200&h=600`, {
+const background = document.querySelector("#background");
+const backgroundCover = document.querySelector("#backgroundCover");
+const attribution = document.querySelector("#attribution");
+let words = [];
+let words24 = [];
+let words57 = [];
+let wordsLong = [];
+
+function newBackground(theme, orientation){
+    return fetch(`https://api.unsplash.com/photos/random?query=${theme}&orientation=${orientation}`, {
         headers: {
             "Authorization": "Client-ID etHez9ur_31n4YuNvHsHVpUzp9btB4v-C7JiGbtEBG8"
         }
     })
     .then(r => r.json())
     .then(j => {console.log(j);
-        document.querySelector("#game").style.backgroundImage = `url(${j.urls.full})`;
-        //document.querySelector("#game").style.backgroundSize = "1200px 600px";
+        background.src = j.urls.full;
+        backgroundCover.src = j.urls.thumb; //this works, but look into blurhash
+        attribution.innerHTML = `Photo by <a href="${j.user.links.html}?utm_source=Typing_Game&utm_medium=referral" target="_blank">${j.user.name}</a> on <a href="https://unsplash.com/?utm_source=Typing_Game&utm_medium=referral" target="_blank">Unsplash</a>`
+
+        background.addEventListener('load', loaded)
     })
-    .catch(err => console.log("what's going on here?", err));
+    .catch(err => console.log("Why don't I see anything?", err));
 }
-newBackground("desert");
+newBackground("desert", "landscape");
+function loaded(){
+    console.log("My background loaded!");
+    backgroundCover.style.opacity = 0;
+    backgroundCover.style.transition = "opacity 1s";
+}
+
+function newWords(theme){
+    return fetch(`https://api.datamuse.com/words?rel_jja=${theme}`)
+    .then(r => r.json())
+    .then(j => {
+        for (const word of j) {
+            words.push(word.word);
+        }
+        words24 = words.filter(a => a.length < 5);
+        words57 = words.filter(a => a.length > 4 && a.length < 8)
+        wordsLong = words.filter(a => a.length > 7)
+    })
+    .catch(err => console.log("Why can't I read anything?", err));
+}
+newWords("desert")
 
 function loadScores() {
     return fetch("./db.json")
@@ -55,6 +86,7 @@ function loadScores() {
             }
         })
 }
+
 function sendScore(score) {
     return fetch("./db.json", {
         headers: {

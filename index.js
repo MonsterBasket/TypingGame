@@ -40,9 +40,11 @@ let GC = {
     childL: {},
     keyCount: 0,
     streak: 0,
+    longStreak: 0,
     score: 0,
     hit: false,
-    currentWords: ""
+    currentWords: "",
+    playing: true //change this once I implement levels and launch screen.
 }
 let backupWords = ['ant','box','car','dog','egg','fog','gin','hot','ice','jam','kin','lie','map','nil','off','pet','qin','red','sly','tee','urn','vat','why','you','zen',
 'atom','bare','cave','dire','epic','fate','goal','heat','iron','joke','kept','list','made','note','ouch','play','quit','rest','sell','told','unit','volt','wind','xray','yarn','zeus',
@@ -101,7 +103,7 @@ function loaded(){
     GC.backgroundCover.style.transition = "opacity 1s";
 }
 function noImageFound(){
-
+    //brief pop-up to explain why background is abstract and doesn't match typed theme
 }
 
 newWords("dessert")
@@ -123,7 +125,7 @@ function newWords(theme){
                 noWordsFound();
             })
         }
-        createWord();
+        setTimeout(createWord,200);
     })
     .catch(err => {
         console.log("Why can't I read anything?", err);
@@ -139,7 +141,7 @@ function noWordsFound(){
                 GC.words.push(word.word)
             }
             if(GC.words.length < 25){
-                GC.words = [...GC.words, ...backupWords];
+                GC.words = [...GC.words, ...backupWords]; //brief pop-up to explain that the typed theme didn't return enough words.
             }
         })
         .catch(err => {console.log("datamuse API is down, using backup words")})
@@ -176,12 +178,16 @@ function sendScore(score) {
     .catch(err => console.log("update failed: ", JSON.stringify(err.message)));
 }
 
+function startGame(){
+
+}
+
 function createWord(){
     const word = document.createElement("div");
     const childR = document.createElement("span");
     const childL = document.createElement("span");
     console.log(GC.words);
-    let wordOptions = GC.words.filter(a => a.length > GC.difficulty-1 && a.length <= GC.difficulty+4) //reduce word list to words of appropriate length for current difficulty
+    let wordOptions = GC.words.filter(a => a.length > GC.difficulty-1 && a.length <= GC.difficulty+3) //reduce word list to words of appropriate length for current difficulty
         for (const letter of GC.currentWords) { //remove words starting with the same letter as any current words
             wordOptions = wordOptions.filter(a => a.charAt(0) !== letter)
         }
@@ -196,71 +202,111 @@ function createWord(){
 
     do{
         childR.innerText = wordOptions[Math.floor(Math.random()*wordOptions.length)];
-    }while (document.querySelector(`#${childR.innerText.charAt(0)}`)) //should never happen, but just in case we have a double up!
+    }while (document.querySelector(`#${childR.innerText.charAt(0)}`)) //should never happen, but I already had this here from a previous implemenation, second catch for two words starting with the same letter.
     word.className = "words";
     childR.className = "letters";
     childL.className = "typedLetters";
     GC.game.appendChild(word);
     word.appendChild(childL);
     word.appendChild(childR);
-    if (getOrientation() === "landscape"){
-        word.style.top = Math.floor(Math.random()*(window.innerHeight-80))+50+"px";
-        word.style.right = "0px";
-        //position children too
-        //add movement to the left here
-        //add up and down animation here
-    }
-    else{
-        word.style.right = Math.floor(Math.random()*(window.innerWidth-word.offsetWidth-50))+25+"px";
-        word.style.top = "0px";
-        //position children too
-        //add movement to the bottom here
-        //add left and right animation here
-    }
     word.id = childR.innerText.charAt(0);
     childL.id = childR.innerText.charAt(0)+"L";
     childR.id = childR.innerText.charAt(0)+"R";
     GC.currentWords += childR.innerText.charAt(0);
+    move(word);
 }
 function typing(e){
     GC.keyCount++;
-    console.log(e.key)
+    let key = (()=>{
+        return e.key.length === 1 && e.key.match(/[a-zA-Z]/i) ? e.key.toLowerCase() : ''
+    })()
+    if (!key) return //if non-letter typed, exit function.
     if (GC.target.childNodes === undefined){  // check if Game Controller has target
-        GC.target = (document.querySelector(`#${e.key}`) || {}) // assign a word on the screen with the matching first letter as target, or do nothing.
+        GC.target = (document.querySelector(`#${key}`) || {}) // assign a word on the screen with the matching first letter as target, or do nothing.
     }
     // ------- if above failed, subtract score
     if (GC.target.childNodes === undefined){
-        GC.streak = 0;
-        GC.score--;
+        scoreDown()
     }
     else{
         // --------- or if it didn't fail, start doing things
         if (!GC.hit){ // check if this is the first hit on that word or not
             GC.hit = true;
-            GC.childL = document.querySelector(`#${e.key}L`);
-            GC.childR = document.querySelector(`#${e.key}R`);
-            console.log("you're typing!")
+            GC.childL = document.querySelector(`#${key}L`);
+            GC.childR = document.querySelector(`#${key}R`);
         }
         //---------
-        if (e.key === GC.childR.innerText.charAt(0)){
-            GC.childL.innerText += GC.childR.innerText.charAt(0)
+        if (key === GC.childR.innerText.charAt(0)){
+            GC.score++;
+            GC.streak++;
+            GC.childL.innerText += GC.childR.innerText.charAt(0);
             GC.childR.innerText = GC.childR.innerText.slice(1);
+        }
+        else{
+            scoreDown();
         }
         //-----------
         if (GC.childR.innerText.length === 0){
             GC.currentWords = GC.currentWords.replace(GC.childL.innerText.charAt(0), "")
-            GC.target = {};
-            GC.childR = {};
-            GC.childL = {};
             GC.hit = false;
-            //destroy everything
-            explode();
+            explode(GC.target);
         }
     }
 }
-function explode(){
+function move(word){
+    let speed = 0.1; //plus some difficulty modifier
+    if (getOrientation() === "landscape"){
+        word.style.top = Math.floor(Math.random()*(window.innerHeight-80))+50+"px";
+        word.style.right = "0%";
+        const timer = setInterval(a => {
+            word.style.right = parseFloat(word.style.right)+speed+"%";
+            if (parseFloat(word.style.right) >= 90){
+                GC.playing = false;
+            }
+            if (!GC.playing){
+                clearInterval(timer)
+                explode(word)
+            }
+        }, 17)
+        //add up and down animation here
+    }
+    else{
+        word.style.right = Math.floor(Math.random()*(window.innerWidth-word.offsetWidth-50))+25+"px";
+        word.style.top = "0%";
+        const timer = setInterval(a => {
+            word.style.top = parseFloat(word.style.top)+speed+"%";
+            if (parseFloat(word.style.top) >= 90){
+                GC.playing = false;
+            }
+            if (!GC.playing){
+                clearInterval(timer)
+                explode(word)
+            }
+        }, 17)
+        //add left and right animation here
+    }
+}
+
+function explode(target){
     //kill the completed word
     //idea: separate each letter into it's own object
+    console.log(target.id)
+    let childL = document.querySelector(`#${target.id}L`);
+    let childR = document.querySelector(`#${target.id}R`);
+    childL.remove();
+    childR.remove();
+    target.remove();
+    GC.target = {};
+    GC.childR = {};
+    GC.childL = {};
+    //destroy everything
+}
+function scoreDown(){
+    if (GC.streak > GC.longStreak){
+        GC.longStreak = GC.streak
+    }
+    GC.streak = 0;
+    GC.score--;
 }
 class Word{
     constructor(word){
@@ -268,7 +314,3 @@ class Word{
     }
 }
 let enemyWords = [];
-// setInterval(a => {
-//     let test = new Word("doesn't matter");
-//     testWords.push(test)
-// }, 1500)

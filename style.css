@@ -29,6 +29,7 @@ body{
 .letters, .typedLetters{
     display: inline;
     position: relative;
+    background-color: white;
 }
 .typedLetters{
     color:red;

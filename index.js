@@ -33,6 +33,9 @@
 let GC = {
     game: document.querySelector("#game"),
     rule: document.querySelector("#rule"),
+    welcome: document.querySelector("#welcome"),
+    error: document.querySelector("#error"),
+    input: document.querySelector("#input"),
     backgroundCover: document.querySelector("#backgroundCover"),
     words: [],
     difficulty: 1,
@@ -43,9 +46,9 @@ let GC = {
     score: 0,
     currentWords: "",
     enemyWords: {},
-    playing: true //change this once I implement levels and launch screen.
+    playing: false //change this once I implement levels and launch screen.
 }
-let backupWords = ['ant', 'box', 'car', 'dog', 'egg', 'fog', 'gin', 'hot', 'ice', 'jam', 'kin', 'lie', 'map', 'nil', 'off', 'pet', 'qin', 'red', 'sly', 'tee', 'urn', 'vat', 'why', 'you', 'zen',
+const backupWords = ['ant', 'box', 'car', 'dog', 'egg', 'fog', 'gin', 'hot', 'ice', 'jam', 'kin', 'lie', 'map', 'nil', 'off', 'pet', 'qin', 'red', 'sly', 'tee', 'urn', 'vat', 'why', 'you', 'zen',
     'atom', 'bare', 'cave', 'dire', 'epic', 'fate', 'goal', 'heat', 'iron', 'joke', 'kept', 'list', 'made', 'note', 'ouch', 'play', 'quit', 'rest', 'sell', 'told', 'unit', 'volt', 'wind', 'xray', 'yarn', 'zeus',
     'apart', 'bring', 'close', 'delve', 'ember', 'finch', 'ghost', 'heart', 'ideal', 'joint', 'knife', 'level', 'moist', 'noise', 'ounce', 'proud', 'quiet', 'rapid', 'solid', 'teach', 'under', 'voice', 'whale', 'xenon', 'yacht', 'zebra',
     'aurora', 'bright', 'create', 'docile', 'earned', 'finder', 'golden', 'honest', 'ironic', 'joking', 'knight', 'lowest', 'modest', 'novice', 'orient', 'played', 'quoted', 'reward', 'spoilt', 'taught', 'undone', 'violet', 'whisky', 'xanadu', 'yellow', 'zenith'];
@@ -109,23 +112,23 @@ function noImageFound() {
 newWords("dessert")
 function newWords(theme) {
     GC.words = [];
-    fetch(`https://api.datamuse.com/words?rel_jja=${theme}&max=200`)
-        .then(r => r.json())
-        .then(j => {
-            for (const word of j) {
-                GC.words.push(word.word);
+    Promise.all([fetch(`https://api.datamuse.com/words?rel_jja=${theme}&max=200`),
+                 fetch(`https://api.datamuse.com/words?rel_jjb=${theme}&max=200`),
+                 fetch(`https://api.datamuse.com/words?rel_syn=${theme}&max=200`),
+                 fetch(`https://api.datamuse.com/words?rel_trg=${theme}&max=200`)])
+        .then(responses => 
+            Promise.all(responses.map(r => r.json()))
+        )
+        .then(data => {
+            for (const array of data) {
+                for (const word of array){
+                    GC.words.push(word.word)                     
+                }
             }
-            if (GC.words.length < 25) {
-                fetch(`https://api.datamuse.com/words?rel_jjb=${theme}&max=200`)
-                    .then(r => r.json())
-                    .then(j => {
-                        for (const word of j) {
-                            GC.words.push(word.word)
-                        }
-                        noWordsFound();
-                    })
+            if (GC.words.length < 30){
+                noWordsFound();
             }
-            setTimeout(startGame, 200);
+            console.log(data);
         })
         .catch(err => {
             console.log("Why can't I read anything?", err);
@@ -133,18 +136,16 @@ function newWords(theme) {
         });
 }
 function noWordsFound() {
+    //brief pop-up to explain that the typed theme didn't return enough words.
     if (GC.words.length < 25) {
-        fetch(`https://api.datamuse.com/words?ml=error&max=200`)
-            .then(r => r.json())
-            .then(j => {
-                for (const word of j) {
-                    GC.words.push(word.word)
-                }
-                if (GC.words.length < 25) {
-                    GC.words = [...GC.words, ...backupWords]; //brief pop-up to explain that the typed theme didn't return enough words.
-                }
-            })
-            .catch(err => { console.log("datamuse API is down, using backup words") })
+        let temp = [...GC.words];
+        newWords("error")
+        setTimeout(a=>{
+            GC.words = [...GC.words, ...temp]
+            if (GC.words.length < 25) { //this would be if there's an issue with Datamuse API
+                GC.words = [...GC.words, ...backupWords]; 
+            }
+        }, 500)
     }
 }
 
@@ -177,34 +178,36 @@ function sendScore(score) {
         .then(obj, console.log("High scores updated: congratulations!"))
         .catch(err => console.log("update failed: ", JSON.stringify(err.message)));
 }
-function startGame() {
+function startGame(theme) {
+    GC.welcome.className = "hidden";
     GC.playing = true;
+    GC.streak = 0;
+    GC.longStreak = 0;
+    GC.difficulty = 1;
+    GC.currentWords = "";
+    GC.keyCount = 0;
+    GC.score = 0;
+    GC.input.innerHTML = "";
     setRule();
-    (function loop() {
-        const rand = Math.round(Math.random() * (1000)) + 1600 - GC.difficulty * 100;
-        if (GC.playing){
-            createWord();
-            setTimeout(() => {
-                loop();  
-            }, rand);
-        }
-    }());
+    newBackground(theme);
+    newWords(theme);
+    setTimeout(function loop() {
+            const rand = Math.round(Math.random() * (1000)) + 1600 - GC.difficulty * 100; // 1 word every 1.5 seconds, +/- 0.5 seconds.  Base time decreases 100ms for each level of difficulty (that adds up fast!)
+            if (GC.playing){
+                createWord();
+                setTimeout(() => {
+                    loop();  
+                }, rand);
+            }
+        }, 500);
 }
 function setRule(){
-    if (getOrientation() === 'landscape'){
-        GC.rule.style.right = "95%";
-        GC.rule.style.width = "1px";
-        GC.rule.style.height = "90%";
-        GC.rule.style.top = "5%"
-    }
-    else {
-        GC.rule.style.top = "95%";
-        GC.rule.style.width = "90%";
-        GC.rule.style.height = "1px";
-        GC.rule.style.right = "5%"
-    }
+    GC.rule.className = getOrientation() === 'landscape' ? "verticalRule" : "horizontalRule";
+    setTimeout(a=> GC.rule.classList.add(GC.rule.className === "verticalRule" ? "verticalRuleExpand" : "horizontalRuleExpand"), 200);
 }
 function gameOver(){
+    GC.welcome.className = "";
+    GC.rule.className = "hidden";
     GC.playing = false;
     for (const key in GC.enemyWords) {
         explode(GC.enemyWords[key]);
@@ -219,7 +222,7 @@ class Word {
     }
 }
 function createWord() {
-    let wordOptions = GC.words.filter(a => a.length > GC.difficulty - 1 && a.length <= GC.difficulty + 3) //reduce word list to words of appropriate length for current difficulty
+    let wordOptions = GC.words.filter(a => a.length > GC.difficulty - 3 && a.length <= GC.difficulty + 3) //reduce word list to words of appropriate length for current difficulty
     for (const letter of GC.currentWords) { //remove words starting with the same letter as any current words
         wordOptions = wordOptions.filter(a => a.charAt(0) !== letter)
     }
@@ -236,8 +239,7 @@ function createWord() {
     const childR = document.createElement("span");
     const childL = document.createElement("span");
     word.className = "words";
-    childR.className = "letters";
-    childL.className = "typedLetters";
+    childR.className = "preLetters";
     GC.game.appendChild(word);
     word.appendChild(childL); 
     word.appendChild(childR);
@@ -245,54 +247,80 @@ function createWord() {
     do {
         childR.innerText = wordOptions[Math.floor(Math.random() * wordOptions.length)]; //I should also sanitize this just to be safe
     } while (GC.enemyWords[childR.innerText.charAt(0)]) //should never happen, but I already had this here from a previous implemenation, just keeps trying again for a new word if there's already a word with the same first letter
-    // word.id = childR.innerText.charAt(0);
-    // childL.id = childR.innerText.charAt(0) + "L";
-    // childR.id = childR.innerText.charAt(0) + "R";
+    let tempHold = childR.innerText;
+    GC.words.splice(GC.words.indexOf(tempHold),1); //removes word from word list
+    let cancel = setTimeout(a=> { //then adds it back in 10 seconds later, provided game is still going
+        GC.words.push(tempHold);
+        if (!GC.playing){
+            clearTimeout(cancel)
+        }
+    }, 10000)
     GC.currentWords += childR.innerText.charAt(0); //adds the first letter of this word to a string, this is used in the ForOf loop at the start of this function
     let luxurious = new Word(childR.innerText.charAt(0), word, childL, childR) // create new Word instance with direct reference to DOM elements - luxurious, because it's a classy word.  Get it?
     GC.enemyWords[childR.innerText.charAt(0)] = luxurious; //push new instance into enemyWords with first letter as the key
     move(word);
 }
 function typing(e) {
-    GC.keyCount++;
-    let key = (a => {
-        return e.key.length === 1 && e.key.match(/[a-zA-Z]/i) ? e.key.toLowerCase() : ''
-    })()
-    if (!key) return //if non-letter typed, exit function.
-    if (!GC.target.word) {  // check if Game Controller has a current target
-        // GC.target = (document.querySelector(`#${key}`) || {}) // assign a word on the screen with the matching first letter as target, or do nothing.
-        GC.target = (GC.enemyWords[key] || {}) // assign a word on the screen with the matching first letter as target, or do nothing.
-    }
-    // ------- if above failed, subtract score ----------(note this is a sequential if, not an else)
-    if (!GC.target.word) {
-        scoreDown()
-    }
-    else { // --------- or if it didn't fail, start doing things
-        if (key === GC.target.childR.innerText.charAt(0)) {
-            GC.score++;
-            GC.streak++;
-            GC.target.childL.innerText += GC.target.childR.innerText.charAt(0);
-            GC.target.childR.innerText = GC.target.childR.innerText.slice(1);
+    // ------------- testing purposes only
+    if (e.key.match(/[1-9]/)) GC.difficulty = e.key
+    // ---------------------------------------
+    if (GC.playing){
+        GC.keyCount++;
+        let key = (a => {
+            return e.key.length === 1 && e.key.match(/[a-z A-Z_-]/i) ? e.key.toLowerCase() : ''
+        })()
+        if (!key) return //if non-letter typed, exit function.
+        if (!GC.target.word) {  // check if Game Controller has a current target
+            // GC.target = (document.querySelector(`#${key}`) || {}) // assign a word on the screen with the matching first letter as target, or do nothing.
+            GC.target = (GC.enemyWords[key] || {}) // assign a word on the screen with the matching first letter as target, or do nothing.
         }
-        else {
-            scoreDown();
+        // ------- if above failed, subtract score ----------(note this is a sequential if, not an else)
+        if (!GC.target.word) {
+            scoreDown()
         }
-        //-----------
-        if (GC.target.childR.innerText.length === 0) {
-            GC.currentWords = GC.currentWords.replace(GC.target.childL.innerText.charAt(0), "")
-            GC.hit = false;
-            explode(GC.target);
+        else { // --------- or if it didn't fail, start doing things
+            if (key === GC.target.childR.innerText.charAt(0)) {
+                GC.score++;
+                GC.streak++;
+                GC.target.childL.innerText += GC.target.childR.innerText.charAt(0);
+                GC.target.childR.innerText = GC.target.childR.innerText.slice(1);
+                GC.target.childR.className = "untypedLetters";
+                GC.target.childL.className = "typedLetters";
+            }
+            else {
+                scoreDown();
+            }
+            //-----------
+            if (GC.target.childR.innerText.length === 0) {
+                GC.currentWords = GC.currentWords.replace(GC.target.childL.innerText.charAt(0), "")
+                GC.target.childR.className = "";
+                GC.target.childL.className = "postLetters";
+                explode(GC.target);
+            }
+        }
+    }
+    else{ //this else statement applies to theme selection menu
+        let key = (a => {
+            return e.key.length === 1 && e.key.match(/[a-zA-Z_-]/i) ? e.key.toLowerCase() : ''
+        })()
+        GC.input.innerHTML += key;
+        if (e.keyCode === 13) { //enter
+            startGame(GC.input.innerText);
+        }
+        if (e.keyCode === 8) { //backspace
+            GC.input.innerHTML = GC.input.innerHTML.substring(0, GC.input.innerHTML.length-1);
         }
     }
 }
 function move(word) {
-    let speed = 0.1; //plus some difficulty modifier
+    let speed = 0.09 + GC.difficulty * 0.01; //I found 0.1 to work well as a base, increase by 10% for each level of difficulty
     if (getOrientation() === "landscape") {
-        word.style.top = Math.floor(Math.random() * (window.innerHeight - 80)) + 50 + "px";
+        const wh = window.innerHeight;
+        word.style.top = Math.floor(Math.random() * (wh - wh * 0.15)) + wh * 0.05 + "px"; // word spawn range is from top 5% to bottom 10% to make room for Unsplash attribution
         word.style.left = "100%";
         word.timer = setInterval(a => {
             word.style.left = parseFloat(word.style.left) - speed + "%";
-            if (parseFloat(word.style.left) <= 5) {
+            if (parseFloat(word.style.left) <= 5) { //gameOver when word reaches Left 5%;
                 gameOver();
             }
             if (!GC.playing) {
@@ -302,11 +330,11 @@ function move(word) {
         //add up and down animation here
     }
     else {
-        word.style.right = Math.floor(Math.random() * (window.innerWidth - word.offsetWidth - 50)) + 25 + "px";
+        word.style.right = Math.floor(Math.random() * (window.innerWidth - word.offsetWidth - 50)) + 25 + "px"; //randomise word position along top, normalizing for the width of the word and a 25px margin.
         word.style.bottom = "100%";
         word.timer = setInterval(a => {
             word.style.bottom = parseFloat(word.style.bottom) - speed + "%";
-            if (parseFloat(word.style.bottom) <= 5) {
+            if (parseFloat(word.style.bottom) <= 5) { //gameOver when word reaches bottom 5%;
                 gameOver();
             }
             if (!GC.playing) {

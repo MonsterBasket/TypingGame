@@ -34,11 +34,12 @@ let GC = {
     game: document.querySelector("#game"),
     rule: document.querySelector("#rule"),
     welcome: document.querySelector("#welcome"),
+    roundInfo: document.querySelector("#roundInfo"),
     error: document.querySelector("#error"),
     input: document.querySelector("#input"),
     backgroundCover: document.querySelector("#backgroundCover"),
     words: [],
-    difficulty: 1,
+    difficulty: 0,
     target: {},
     keyCount: 0,
     streak: 0,
@@ -46,7 +47,9 @@ let GC = {
     score: 0,
     currentWords: "",
     enemyWords: {},
-    playing: false //change this once I implement levels and launch screen.
+    playing: false,
+    wordCount: 0,
+    lastWord: false 
 }
 const backupWords = ['ant', 'box', 'car', 'dog', 'egg', 'fog', 'gin', 'hot', 'ice', 'jam', 'kin', 'lie', 'map', 'nil', 'off', 'pet', 'qin', 'red', 'sly', 'tee', 'urn', 'vat', 'why', 'you', 'zen',
     'atom', 'bare', 'cave', 'dire', 'epic', 'fate', 'goal', 'heat', 'iron', 'joke', 'kept', 'list', 'made', 'note', 'ouch', 'play', 'quit', 'rest', 'sell', 'told', 'unit', 'volt', 'wind', 'xray', 'yarn', 'zeus',
@@ -64,16 +67,12 @@ function getOrientation() {
             return "squarish";
     }
 }
-newBackground("dessert");
+newBackground("typing");
 function newBackground(theme) {
     const background = document.querySelector("#background");
     const attribution = document.querySelector("#attribution");
     function appendix() {
         return getOrientation() === "portrait" ? `&fit=crop&h=${window.innerHeight}&fit=max` : `&fit=crop&w=${window.innerWidth}&fit=max`
-        // if (getOrientation() === "landscape")
-        // return `&fit=crop&w=${window.innerWidth}&fit=max`
-        // else if (getOrientation() === "portrait")
-        // return `&fit=crop&h=${window.innerHeight}&fit=max`
     }
     return fetch(`https://api.unsplash.com/photos/random?query=${theme}&orientation=${getOrientation()}`, {
         headers: {
@@ -82,10 +81,9 @@ function newBackground(theme) {
     })
         .then(r => r.json())
         .then(j => {
-            console.log(j);
             GC.backgroundCover.style.opacity = 1;
             GC.backgroundCover.src = j.urls.thumb; //this works, but look into blurhash
-            setTimeout(a => GC.backgroundCover.src = j.urls.small, 1000)
+            setTimeout(a => GC.backgroundCover.src = j.urls.small, 1000) //not great, just trying to smooth the load transition
             background.src = j.urls.raw + appendix();
             attribution.innerHTML = `Photo by <a href="${j.user.links.html}?utm_source=Typing_Game&utm_medium=referral" target="_blank">${j.user.name}</a> on <a href="https://unsplash.com/?utm_source=Typing_Game&utm_medium=referral" target="_blank">Unsplash</a>`
 
@@ -103,13 +101,12 @@ function newBackground(theme) {
 }
 function loaded() {
     GC.backgroundCover.style.opacity = 0;
-    GC.backgroundCover.style.transition = "opacity 1s";
+    GC.backgroundCover.style.transition = "opacity 2s";
 }
 function noImageFound() {
     //brief pop-up to explain why background is abstract and doesn't match typed theme
 }
 
-newWords("dessert")
 function newWords(theme) {
     GC.words = [];
     Promise.all([fetch(`https://api.datamuse.com/words?rel_jja=${theme}&max=200`),
@@ -128,7 +125,6 @@ function newWords(theme) {
             if (GC.words.length < 30){
                 noWordsFound();
             }
-            console.log(data);
         })
         .catch(err => {
             console.log("Why can't I read anything?", err);
@@ -149,41 +145,12 @@ function noWordsFound() {
     }
 }
 
-function loadScores() {
-    return fetch("./db.json")
-        .then(resp => resp.json())
-        .then(json => {
-            for (const score of json) {
-                GC.scores.push(score);
-            }
-        })
-}
-function highScore(score) {
-    const name = "";//get player name
-    //sort list
-    sendScore({ name, score })
-
-}
-
-function sendScore(score) {
-    return fetch("./db.json", {
-        headers: {
-            "Content-Type": "application/json",
-            "Accept": "application/json"
-        },
-        method: "POST",
-        body: JSON.stringify(score),
-    })
-        .then(r => r.json()) //can I just do nothing?
-        .then(obj, console.log("High scores updated: congratulations!"))
-        .catch(err => console.log("update failed: ", JSON.stringify(err.message)));
-}
 function startGame(theme) {
     GC.welcome.className = "hidden";
     GC.playing = true;
     GC.streak = 0;
     GC.longStreak = 0;
-    GC.difficulty = 1;
+    GC.difficulty = 0;
     GC.currentWords = "";
     GC.keyCount = 0;
     GC.score = 0;
@@ -191,19 +158,28 @@ function startGame(theme) {
     setRule();
     newBackground(theme);
     newWords(theme);
-    setTimeout(function loop() {
-            const rand = Math.round(Math.random() * (1000)) + 1600 - GC.difficulty * 100; // 1 word every 1.5 seconds, +/- 0.5 seconds.  Base time decreases 100ms for each level of difficulty (that adds up fast!)
-            if (GC.playing){
-                createWord();
-                setTimeout(() => {
-                    loop();  
-                }, rand);
-            }
-        }, 500);
+    newRound(1000);
 }
 function setRule(){
     GC.rule.className = getOrientation() === 'landscape' ? "verticalRule" : "horizontalRule";
     setTimeout(a=> GC.rule.classList.add(GC.rule.className === "verticalRule" ? "verticalRuleExpand" : "horizontalRuleExpand"), 200);
+}
+function newRound(displayDelay = 0){
+    GC.difficulty++;
+    GC.wordCount = 0;
+    GC.lastWord = false;
+    setTimeout(a => GC.roundInfo.className = "", displayDelay);
+    GC.roundInfo.innerText = "Round "+GC.difficulty;
+    setTimeout(a => GC.roundInfo.className = "hidden", 3000+displayDelay)
+    setTimeout(function loop() {
+        const rand = Math.round(Math.random() * (1000)) + 1600 - GC.difficulty * 100; // 1 word every 1.5 seconds, +/- 0.5 seconds.  Base time decreases 100ms for each level of difficulty (that adds up fast!)
+        if (!GC.lastWord && GC.playing){ //stop making words after the last word - see first line of createWord.
+            createWord();
+            setTimeout(() => {
+                loop();  
+            }, rand);
+        }
+    }, 4000 - displayDelay);
 }
 function gameOver(){
     GC.welcome.className = "";
@@ -222,11 +198,14 @@ class Word {
     }
 }
 function createWord() {
+    GC.wordCount++;
+    if (GC.wordCount >= 5 + GC.difficulty * 3){
+        GC.lastWord = true;
+    }
     let wordOptions = GC.words.filter(a => a.length > GC.difficulty - 3 && a.length <= GC.difficulty + 3) //reduce word list to words of appropriate length for current difficulty
     for (const letter of GC.currentWords) { //remove words starting with the same letter as any current words
         wordOptions = wordOptions.filter(a => a.charAt(0) !== letter)
     }
-    console.log("words after reduction: " + wordOptions)
     if (wordOptions.length === 0) { //if word options reaches 0 - do the same as above with the backup wordlist
         let newOptions = backupWords.filter(a => a.length > GC.difficulty - 1 && a.length <= GC.difficulty + 3)
         for (const letter of GC.currentWords) {
@@ -262,7 +241,7 @@ function createWord() {
 }
 function typing(e) {
     // ------------- testing purposes only
-    if (e.key.match(/[1-9]/)) GC.difficulty = e.key
+    if (e.key.match(/[1-9]/)) GC.difficulty = e.key;
     // ---------------------------------------
     if (GC.playing){
         GC.keyCount++;
@@ -296,6 +275,9 @@ function typing(e) {
                 GC.target.childR.className = "";
                 GC.target.childL.className = "postLetters";
                 explode(GC.target);
+                if (GC.currentWords === "" && GC.lastWord){
+                    setTimeout(newRound(), 1000);
+                }
             }
         }
     }
@@ -364,4 +346,33 @@ function scoreDown() {
     }
     GC.streak = 0;
     GC.score--;
+}
+function loadScores() {
+    return fetch("./db.json")
+        .then(resp => resp.json())
+        .then(json => {
+            for (const score of json) {
+                GC.scores.push(score);
+            }
+        })
+}
+function highScore(score) {
+    const name = "";//get player name
+    //sort list
+    sendScore({ name, score })
+
+}
+
+function sendScore(score) {
+    return fetch("./db.json", {
+        headers: {
+            "Content-Type": "application/json",
+            "Accept": "application/json"
+        },
+        method: "POST",
+        body: JSON.stringify(score),
+    })
+        .then(r => r.json()) //can I just do nothing?
+        .then(obj, console.log("High scores updated: congratulations!"))
+        .catch(err => console.log("update failed: ", JSON.stringify(err.message)));
 }

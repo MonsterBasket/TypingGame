@@ -138,6 +138,7 @@ h2{
 #gameOver{
     position: absolute;
     display: flex;
+    box-sizing: border-box;
     flex-direction: column;
     text-align: center;
     margin-left: auto;
@@ -164,6 +165,11 @@ h2{
                 #c8e2eb inset -3px 3px,
                 #c3d6dc inset -4px 4px;
     transition: 1s;
+    -ms-overflow-style: none; /*IE and Edge*/
+    scrollbar-width: none; /*Firefox*/
+}
+#gameOver::-webkit-scrollbar{/*chrome, safari and opera*/
+    display:none;
 }
 #stats div, #scores div{
     display: flex;
@@ -189,7 +195,7 @@ h2{
 }
 #scores{
     overflow-y: auto;
-    height: 275px;
+    max-height: 275px;
     padding-top: 10px;
     -ms-overflow-style: none; /*IE and Edge*/
     scrollbar-width: none; /*Firefox*/
@@ -227,7 +233,6 @@ h2{
     rgba(173, 216, 230, 0.1) inset 0px 10px;
 
 }
-
 #roundInfo{
     font-size: 3em;
     color: maroon;

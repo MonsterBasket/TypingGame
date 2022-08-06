@@ -26,10 +26,6 @@
 // - theme to choose, this will trigger a new background image and word list.
 //#endregion
 
-
-//this works!  Sizing is not working from the request, but I'm brute forcing it with css.
-//If I could get a bunch of random words related to a search term, the user could just type their own themes!
-//Need to add who the photo is by and allow user to download it if they want (unsplash terms)
 let GC = {
     game: document.querySelector("#game"),
     rule: document.querySelector("#rule"),
@@ -45,6 +41,7 @@ let GC = {
     accuracySpan: document.querySelector("#accuracySpan"),
     streakSpan: document.querySelector("#streakSpan"),
     wordsSpan: document.querySelector("#wordsSpan"),
+    phoneCover: document.querySelector("#phoneCover"),
     words: [],
     difficulty: 0,
     target: {},
@@ -65,6 +62,14 @@ const backupWords = ['ant', 'box', 'car', 'dog', 'egg', 'fog', 'gin', 'hot', 'ic
     'atom', 'bare', 'cave', 'dire', 'epic', 'fate', 'goal', 'heat', 'iron', 'joke', 'kept', 'list', 'made', 'note', 'ouch', 'play', 'quit', 'rest', 'sell', 'told', 'unit', 'volt', 'wind', 'xray', 'yarn', 'zeus',
     'apart', 'bring', 'close', 'delve', 'ember', 'finch', 'ghost', 'heart', 'ideal', 'joint', 'knife', 'level', 'moist', 'noise', 'ounce', 'proud', 'quiet', 'rapid', 'solid', 'teach', 'under', 'voice', 'whale', 'xenon', 'yacht', 'zebra',
     'aurora', 'bright', 'create', 'docile', 'earned', 'finder', 'golden', 'honest', 'ironic', 'joking', 'knight', 'lowest', 'modest', 'novice', 'orient', 'played', 'quoted', 'reward', 'spoilt', 'taught', 'undone', 'violet', 'whisky', 'xanadu', 'yellow', 'zenith'];
+class Word {
+    constructor(name, word, childL, childR) {
+        this.name = name;
+        this.word = word;
+        this.childL = childL;
+        this.childR = childR;
+    }
+}
 window.addEventListener("keydown", typeSelect)
 function typeSelect (e){
     // ------------- testing purposes only - difficulty change
@@ -86,7 +91,6 @@ function typeSelect (e){
         }  
     } 
 }
-
 function getOrientation() {
     switch (true) {
         case window.innerWidth / window.innerHeight > 1.25:
@@ -162,23 +166,21 @@ function newWords(theme) {
 }
 function noWordsFound() {
     //brief pop-up to explain that the typed theme didn't return enough words.
-    if (GC.words.length < 25) {
-        let temp = [...GC.words];
-        newWords("error")
-        setTimeout(a=>{
-            GC.words = [...GC.words, ...temp]
-            if (GC.words.length < 25) { //this would be if there's an issue with Datamuse API
-                GC.words = [...GC.words, ...backupWords]; 
-            }
-        }, 500)
-    }
+    let temp = [...GC.words];
+    newWords("error")
+    setTimeout(a=>{
+        GC.words = [...GC.words, ...temp]
+        if (GC.words.length < 30) { //this would be if there's an issue with Datamuse API
+            GC.words = [...GC.words, ...backupWords]; 
+        }
+    }, 500)
 }
 function startGame(theme) {
     GC.welcome.className = "hidden";
     GC.playing = true;
     GC.streak = 0;
     GC.longStreak = 0;
-    GC.difficulty = 0;
+    GC.difficulty = 15;
     GC.currentWords = "";
     GC.keyCount = [0,0];
     GC.score = 0;
@@ -195,6 +197,7 @@ function setRule(){
 }
 function newRound(){
     GC.difficulty++;
+    GC.score += GC.streak;
     GC.wordCount = 0;
     GC.roundInfo.className = "";
     GC.roundInfo.innerText = "Round "+GC.difficulty;
@@ -204,7 +207,8 @@ function newRound(){
         
     }, 2500)
     setTimeout(function loop() {
-        const rand = Math.round(Math.random() * (1000)) + 1600 - GC.difficulty * 100; // 1 word every 1.5 seconds, +/- 0.5 seconds.  Base time decreases 100ms for each level of difficulty (that adds up fast!)
+        let modifier = GC.difficulty >16 ? 16 : GC.difficulty;
+        const rand = Math.round(Math.random() * (1000)) + 1600 - modifier * 100; // 1 word every 1.5 seconds, +/- 0.5 seconds.  Base time decreases 100ms for each level of difficulty (that adds up fast!)
         if (!GC.lastWord && GC.playing){ //stop making words after the last word - see first line of createWord.
             createWord();
             setTimeout(() => {
@@ -223,36 +227,27 @@ function gameOver(){
     GC.streakSpan.innerText = (GC.longStreak || GC.streak);
     GC.wordsSpan.innerText = GC.wordCount;
     GC.gameOver.className = ""; //put a timeout on this once I implement explode animation
+    GC.phoneCover.style.display = "none";
     GC.rule.className = "hidden";
     GC.playing = false;
     for (const key in GC.enemyWords) {
         explode(GC.enemyWords[key]);
     }
 }
-class Word {
-    constructor(name, word, childL, childR) {
-        this.name = name;
-        this.word = word;
-        this.childL = childL;
-        this.childR = childR;
-    }
-}
 function createWord() {
     GC.wordCount++;
-    if (GC.wordCount >= 5 + GC.difficulty * 2){
+    if (GC.wordCount >= 5 + GC.difficulty * 1.3){
         GC.lastWord = true;
     }
-    let wordOptions = GC.words.filter(a => a.length > GC.difficulty - 3 && a.length <= GC.difficulty + 3) //reduce word list to words of appropriate length for current difficulty
-    for (const letter of GC.currentWords) { //remove words starting with the same letter as any current words
-        wordOptions = wordOptions.filter(a => a.charAt(0) !== letter)
-    }
-    if (wordOptions.length === 0) { //if word options reaches 0 - do the same as above with the backup wordlist
-        let newOptions = backupWords.filter(a => a.length > GC.difficulty - 1 && a.length <= GC.difficulty + 3)
-        for (const letter of GC.currentWords) {
-            newOptions = newOptions.filter(a => a.charAt(0) !== letter)
+    let bottomRange = GC.difficulty -3;
+    let topRange = GC.difficulty +3;
+    let wordOptions = [];
+    do{
+        wordOptions = GC.words.filter(a => a.length > bottomRange-- && a.length <= topRange++) //reduce word list to words of appropriate length for current difficulty
+        for (const letter of GC.currentWords) { //remove words starting with the same letter as any current words
+            wordOptions = wordOptions.filter(a => a.charAt(0) !== letter)
         }
-        wordOptions = [...wordOptions, ...newOptions] //then add it to the options
-    }
+    } while (wordOptions.length === 0)
     //#region ------------- create DOM elements ------------
     const word = document.createElement("div"); 
     const childR = document.createElement("span");
@@ -335,6 +330,7 @@ function scoresTyping(e) {
         setTimeout(a=> GC.typeLock = false, 1000);
         GC.gameOver.className = "hidden";
         GC.welcome.className = "";
+        GC.phoneCover.style.display = "block";
         GC.difficulty = 0;
         return
     }
@@ -420,11 +416,12 @@ function scoreDown() {
     GC.score--;
 }
 function loadScores() {
-    return fetch("https://monsterbasket.github.io/TypingGame/scores")
+    return fetch("https://dev-fll9ljzm03bkwaw.api.raw-labs.com/scores")
         .then(resp => resp.json())
         .then(json => {
+            console.log(json);
             GC.highScores = [];
-            for (const score of json) {
+            for (const score of json.record) {
                 GC.highScores.push(score);
             }
             GC.highScores.push({name: "ENTER YOUR NAME", score: GC.score})
@@ -444,16 +441,16 @@ function loadScores() {
                 }
             }
             GC.myName = [1,document.querySelector(".scoreInput")]; 
-            GC.scores.scrollTo(0,GC.myName[1].offsetTop - GC.scores.offsetTop - GC.scores.offsetHeight - 10); 
+            GC.scores.scrollTo(0,GC.myName[1].offsetTop - GC.scores.offsetTop - GC.scores.offsetHeight - 10);
         })
+        .catch(err => console.log("loading scores failed:", JSON.stringify(err.message)));
 }
 function sendScore(score) {
-    return fetch("https://monsterbasket.github.io/TypingGame/scores", {
+    return fetch(`https://dev-fll9ljzm03bkwaw.api.raw-labs.com/scores`, {
         method: "POST",
         headers: {
-            "Access-Control-Allow-Origin": "*",
             "Content-Type": "application/json",
-            "Accept": "application/json;odata.metadata=full"
+            "Accept": "application/json"
         },
         body: JSON.stringify(score)
     })

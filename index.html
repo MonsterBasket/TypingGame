@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script defer src="./index.js"></script>
     <link rel="stylesheet" href="./style.css">
+    <link rel="icon" type="image/x-icon" href="./favicon.ico">
     <title>Typing Game - Good Titles Are For Suckers</title>
 </head>
 <body>
@@ -19,7 +20,19 @@
         <div id="game"></div>
         <div id="welcome">
             <h4>Press Enter to start, or type your own theme!</h4>
-            <div id="inputLeft"></div><div id="input"></div><div id="inputRight"></div>
+            <input type="text" id="input"><div></div>
+        </div>
+        <div id="gameOver" class="hidden">
+            <h2>Game Over!</h2>
+            <div id="stats">
+                <div id="roundDiv"></div>
+                <div><span>Score:</span> <span id="scoreSpan"></span></div>
+                <div><span>Accuracy:</span> <span id="accuracySpan"></span></div>
+                <div><span>Longest Streak:</span> <span id="streakSpan"></span></div>
+                <div><span>Total Words:</span> <span id="wordsSpan"></span></div>
+            </div>
+            <h2>High Scores:</h2>
+            <div id="scores"></div>
         </div>
         <div id="roundInfo" class="hidden"></div>
         <div id="error" class="hidden"></div>

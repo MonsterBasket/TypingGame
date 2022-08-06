@@ -1,7 +1,14 @@
+@import url('https://fonts.googleapis.com/css?family=Cambay:400');
+
 body{
+    font-family: 'Cambay', sans-serif;
+    font-weight: 400;
     margin: 0px;
     height: 100vh;
     overflow: hidden;
+}
+h2{
+    margin-bottom: 10px;
 }
 #gameContainer, #game, #background, #backgroundCover{
     width: 100%;
@@ -18,12 +25,11 @@ body{
 }
 #attribution{
     position: relative;
-    top: -3.5em;
-    margin-right: 1em;
+    top: -4.3em;
+    width: fit-content;
     margin-left: 1em;
-    width: calc(100% - 2em);
     font-size: 0.8em;
-    padding: 2px 8px;
+    padding: 3px 8px;
     border-radius: 15px;
     background: lightblue;
     box-shadow: #567b87 inset 1px -1px,
@@ -49,7 +55,7 @@ body{
     background: white;
     border-radius: 50px 50px 50px 50px;
     border: solid white;
-    border-width: 1px 6px 4px 6px;
+    border-width: 2px 10px 0px 10px;
     box-shadow: white 0px 0px 6px 1px;
 }
 .untypedLetters{
@@ -57,7 +63,7 @@ body{
     background: white;
     border-radius: 0 50px 50px 0;
     border: solid white;
-    border-width: 1px 6px 4px 0px;
+    border-width: 2px 10px 0px 0px;
     box-shadow: white 0px 0px 6px 1px;
 }
 .typedLetters{
@@ -65,7 +71,7 @@ body{
     background: aqua;
     border-radius: 50px 0 0 50px;
     border: solid aqua;
-    border-width: 1px 0px 4px 6px;
+    border-width: 2px 0px 0px 10px;
     box-shadow: aqua 0px 0px 6px 1px;
     z-index: 1;
 }
@@ -73,7 +79,7 @@ body{
     color: red;
     border-radius: 50px 50px 50px 50px;
     border: solid aqua;
-    border-width: 1px 6px 4px 6px;
+    border-width: 2px 10px 0px 10px;
     box-shadow: aqua 0px 0px 6px 1px;
 }
 #rule{
@@ -129,12 +135,107 @@ body{
                 #c3d6dc inset -4px 4px;
     transition: 1s;
 }
+#gameOver{
+    position: absolute;
+    display: flex;
+    flex-direction: column;
+    text-align: center;
+    margin-left: auto;
+    margin-right: auto;
+    border-radius: 40px;
+    left: 0px;
+    right: 0px;
+    top: 10%;
+    max-width: 85%;
+    max-height: 80%;
+    width: 600px;
+    padding-bottom: 20px;
+    background: lightblue;
+    box-shadow: rgb(100 100 100) -1px 1px,
+                rgb(100 100 100 / 20%) -2px 2px,
+                rgb(100 100 100 / 20%) -3px 3px,
+                rgb(100 100 100 / 20%) -4px 4px,
+                rgb(100 100 100 / 20%) -5px 5px,
+                #567b87 inset 1px -1px,
+                #87b4c3 inset 2px -2px,
+                #b0ced7 inset 3px -3px,
+                #eff5f6 inset -1px 1px,
+                #e1eef2 inset -2px 2px,
+                #c8e2eb inset -3px 3px,
+                #c3d6dc inset -4px 4px;
+    transition: 1s;
+}
+#stats div, #scores div{
+    display: flex;
+    /*flex-direction: column;*/
+}
+#stats div span, #scores div span{
+    flex: 1;
+}
+#stats div span:first-of-type{
+    text-align: right;
+    padding-right: 5px;
+    padding-left: 40px;
+}
+#scores div span:first-of-type{
+    text-align: left;
+    margin-right: 5px;
+    margin-left: 40px;
+}
+#stats div span:last-of-type, #scores div span:last-of-type{
+    padding-left: 5px;
+    padding-right: 40px;
+    text-align: left;
+}
+#scores{
+    overflow-y: auto;
+    height: 275px;
+    padding-top: 10px;
+    -ms-overflow-style: none; /*IE and Edge*/
+    scrollbar-width: none; /*Firefox*/
+}
+#scores::-webkit-scrollbar{/*chrome, safari and opera*/
+    display:none;
+}
+#scores::after{
+    content: '';
+    height: 285px;
+    position: absolute;
+    bottom: 20px;
+    left: 20px;
+    right: 20px;
+    width: auto;
+    box-shadow: lightblue inset 0px -1px,
+    rgba(173, 216, 230, 0.9) inset 0px -2px,
+    rgba(173, 216, 230, 0.8) inset 0px -3px,
+    rgba(173, 216, 230, 0.7) inset 0px -4px,
+    rgba(173, 216, 230, 0.6) inset 0px -5px,
+    rgba(173, 216, 230, 0.5) inset 0px -6px,
+    rgba(173, 216, 230, 0.4) inset 0px -7px,
+    rgba(173, 216, 230, 0.3) inset 0px -8px,
+    rgba(173, 216, 230, 0.2) inset 0px -9px,
+    rgba(173, 216, 230, 0.1) inset 0px -10px,
+    lightblue inset 0px 1px,
+    rgba(173, 216, 230, 0.9) inset 0px 2px,
+    rgba(173, 216, 230, 0.8) inset 0px 3px,
+    rgba(173, 216, 230, 0.7) inset 0px 4px,
+    rgba(173, 216, 230, 0.6) inset 0px 5px,
+    rgba(173, 216, 230, 0.5) inset 0px 6px,
+    rgba(173, 216, 230, 0.4) inset 0px 7px,
+    rgba(173, 216, 230, 0.3) inset 0px 8px,
+    rgba(173, 216, 230, 0.2) inset 0px 9px,
+    rgba(173, 216, 230, 0.1) inset 0px 10px;
+
+}
+
 #roundInfo{
     font-size: 3em;
     color: maroon;
     text-shadow: black;
+    background: linear-gradient(90deg, rgba(0, 0, 0, 0) 30%, rgba(255, 255, 255, 0.7) 40%, rgba(255, 255, 255, 0.7) 60%, rgba(0, 0, 0, 0) 70%);
     position: absolute;
     text-align: center;
+    padding-top: 7px;
     top: 30%;
     width: 100%;
     transition: 1s;
@@ -145,32 +246,32 @@ body{
 }
 #input{
     display: inline-block;
+    text-align: center;
     vertical-align: top;
     margin: 0 0 1.5em 0;
-    background: white;
-    padding-top: 0.45em;
+    background: linear-gradient(90deg, transparent 0%, white 20%, white 80%, transparent 100%);
+    border: none;
+    padding: 0.25em 4em;
     height: 1.55em;
-    width: 40%;
-    min-width: 150px;
+    width: 50%;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
 }
-#inputRight{
-    display: inline-block;
-    margin-right: auto;
-    margin-bottom: 1.5em;
-    height: 2em;
-    width: 10%;
-    background: linear-gradient(to right, white, lightblue);
+#input + div{
+    display: block;
+    position: absolute;
+    top: 0px;
+    width:100%;
+    height:100%;
 }
-#inputLeft{
-    display: inline-block;
-    margin-left: auto;
-    margin-bottom: 1.5em;
-    height: 2em;
-    width: 10%;
-    background: linear-gradient(to left, white, lightblue);
+#roundDiv{
+    flex-flow: column;
+}
+.scoreInput{
+    overflow: hidden;
+    background: palegreen;
+    color:darkred;
 }
 #error{
     top: 90%;

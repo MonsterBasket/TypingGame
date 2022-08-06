@@ -451,8 +451,9 @@ function sendScore(score) {
     return fetch("https://monsterbasket.github.io/TypingGame/scores", {
         method: "POST",
         headers: {
+            "Access-Control-Allow-Origin": "*",
             "Content-Type": "application/json",
-            "Accept": "application/json"
+            "Accept": "application/json;odata.metadata=full"
         },
         body: JSON.stringify(score)
     })

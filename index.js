@@ -420,7 +420,7 @@ function scoreDown() {
     GC.score--;
 }
 function loadScores() {
-    return fetch("https://monsterbasket.github.io/TypingGame/scores.json")
+    return fetch("https://monsterbasket.github.io/TypingGame/scores")
         .then(resp => resp.json())
         .then(json => {
             GC.highScores = [];
@@ -448,7 +448,7 @@ function loadScores() {
         })
 }
 function sendScore(score) {
-    return fetch("https://monsterbasket.github.io/TypingGame/scores.json", {
+    return fetch("https://monsterbasket.github.io/TypingGame/scores", {
         method: "POST",
         headers: {
             "Content-Type": "application/json",

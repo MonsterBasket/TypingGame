@@ -416,12 +416,12 @@ function scoreDown() {
     GC.score--;
 }
 function loadScores() {
-    return fetch("https://dev-fll9ljzm03bkwaw.api.raw-labs.com/scores")
+    return fetch("http://localhost:3000/scores")
         .then(resp => resp.json())
         .then(json => {
             console.log(json);
             GC.highScores = [];
-            for (const score of json.record) {
+            for (const score of json) {
                 GC.highScores.push(score);
             }
             GC.highScores.push({name: "ENTER YOUR NAME", score: GC.score})
@@ -446,7 +446,7 @@ function loadScores() {
         .catch(err => console.log("loading scores failed:", JSON.stringify(err.message)));
 }
 function sendScore(score) {
-    return fetch(`https://dev-fll9ljzm03bkwaw.api.raw-labs.com/scores`, {
+    return fetch(`http://localhost:3000/scores`, {
         method: "POST",
         headers: {
             "Content-Type": "application/json",

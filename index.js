@@ -65,14 +65,27 @@ const backupWords = ['ant', 'box', 'car', 'dog', 'egg', 'fog', 'gin', 'hot', 'ic
     'atom', 'bare', 'cave', 'dire', 'epic', 'fate', 'goal', 'heat', 'iron', 'joke', 'kept', 'list', 'made', 'note', 'ouch', 'play', 'quit', 'rest', 'sell', 'told', 'unit', 'volt', 'wind', 'xray', 'yarn', 'zeus',
     'apart', 'bring', 'close', 'delve', 'ember', 'finch', 'ghost', 'heart', 'ideal', 'joint', 'knife', 'level', 'moist', 'noise', 'ounce', 'proud', 'quiet', 'rapid', 'solid', 'teach', 'under', 'voice', 'whale', 'xenon', 'yacht', 'zebra',
     'aurora', 'bright', 'create', 'docile', 'earned', 'finder', 'golden', 'honest', 'ironic', 'joking', 'knight', 'lowest', 'modest', 'novice', 'orient', 'played', 'quoted', 'reward', 'spoilt', 'taught', 'undone', 'violet', 'whisky', 'xanadu', 'yellow', 'zenith'];
-window.addEventListener("keydown", e => {
+window.addEventListener("keydown", typeSelect)
+function typeSelect (e){
+    // ------------- testing purposes only - difficulty change
+    //if (e.key >= 49 && e.key <= 57) GC.difficulty = e.key;
+    // ---------------------------------------
     if (GC.typeLock) return
     if(e.keyCode == 32) {
         e.preventDefault();
       }
     if (GC.playing){
-        playTyping();
-});
+        playTyping(e);
+    }
+    else{
+        if (GC.difficulty > 0){
+            scoresTyping(e); //Game Over/scores menu (difficulty is set to 1 as the first round starts, and not reset to 0 until we're done here.)
+        }
+        else {
+            menuTyping(e);
+        }  
+    } 
+}
 
 function getOrientation() {
     switch (true) {
@@ -84,7 +97,7 @@ function getOrientation() {
             return "squarish";
     }
 }
-newBackground("typing");
+newBackground("type writer");
 function newBackground(theme) {
     const background = document.querySelector("#background");
     const attribution = document.querySelector("#attribution");
@@ -266,104 +279,92 @@ function createWord() {
     GC.enemyWords[childR.innerText.charAt(0)] = luxurious; //push new instance into enemyWords with first letter as the key
     move(word);
 }
-function typing(e) {
-    // ------------- testing purposes only
-    //if (e.key >= 49 && e.key <= 57) GC.difficulty = e.key;
-    // ---------------------------------------
-    if (GC.typeLock) return
-    if(e.keyCode == 32) {
-        e.preventDefault();
-      }
-    if (GC.playing){
-        GC.keyCount[0]++;
-        let key = (a => {
-            return e.key.length === 1 && e.key.match(/[a-z A-Z_-]/i) ? e.key.toLowerCase() : ''
-        })()
-        if (!key) return //if non-letter typed, exit function.
-        if (!GC.target.word) {  // check if Game Controller has a current target
-            GC.target = (GC.enemyWords[key] || {}) // assign a word on the screen with the matching first letter as target, or do nothing.
+function playTyping(e) {
+    GC.keyCount[0]++;
+    let key = (a => {
+        return e.key.length === 1 && e.key.match(/[a-z A-Z_-]/i) ? e.key.toLowerCase() : ''
+    })()
+    if (!key) return //if non-letter typed, exit function.
+    if (!GC.target.word) {  // check if Game Controller has a current target
+        GC.target = (GC.enemyWords[key] || {}) // assign a word on the screen with the matching first letter as target, or do nothing.
+    }
+    // ------- if above failed, subtract score ----------(note this is a sequential if, not an else)
+    if (!GC.target.word) {
+        scoreDown()
+    }
+    else { // --------- or if it didn't fail, start doing things
+        if (key === GC.target.childR.innerText.charAt(0)) {
+            GC.score++;
+            GC.streak++;
+            GC.keyCount[1]++;
+            GC.target.childL.innerText += GC.target.childR.innerText.charAt(0);
+            GC.target.childR.innerText = GC.target.childR.innerText.slice(1);
+            GC.target.childR.className = "untypedLetters";
+            GC.target.childL.className = "typedLetters";
         }
-        // ------- if above failed, subtract score ----------(note this is a sequential if, not an else)
-        if (!GC.target.word) {
-            scoreDown()
+        else {
+            scoreDown();
         }
-        else { // --------- or if it didn't fail, start doing things
-            if (key === GC.target.childR.innerText.charAt(0)) {
-                GC.score++;
-                GC.streak++;
-                GC.keyCount[1]++;
-                GC.target.childL.innerText += GC.target.childR.innerText.charAt(0);
-                GC.target.childR.innerText = GC.target.childR.innerText.slice(1);
-                GC.target.childR.className = "untypedLetters";
-                GC.target.childL.className = "typedLetters";
-            }
-            else {
-                scoreDown();
-            }
-            //-----------
-            if (GC.target.childR.innerText.length === 0) { //word is fully typed
-                GC.totalWords ++;
-                GC.currentWords = GC.currentWords.replace(GC.target.childL.innerText.charAt(0), "")
-                GC.target.childR.className = "";
-                GC.target.childL.className = "postLetters";
-                explode(GC.target);
-                if (GC.currentWords === "" && GC.lastWord){
-                    setTimeout(newRound, 1000);
-                }
+        //-----------
+        if (GC.target.childR.innerText.length === 0) { //word is fully typed
+            GC.totalWords ++;
+            GC.currentWords = GC.currentWords.replace(GC.target.childL.innerText.charAt(0), "")
+            GC.target.childR.className = "";
+            GC.target.childL.className = "postLetters";
+            explode(GC.target);
+            if (GC.currentWords === "" && GC.lastWord){
+                setTimeout(newRound, 1000);
             }
         }
     }
-    else{ //this else statement applies to menus
-        if(GC.difficulty > 0) // GAMEOVER menu (difficulty is set to 1 as the first round starts, and not reset to 0 until we're done here.)
-        {
-            let key = e.key.length === 1 ? e.key : '';
-            let letter = e.key.length === 1 && e.key.match(/[a-z 0-9A-Z_-]/i) ? true : false;
-            if (GC.myName[1].innerHTML === "ENTER YOUR NAME" && letter){
-                GC.myName[1].innerHTML = key; //overwrite "ENTER YOUR NAME" with first valid keystroke
-            }
-            else{
-                GC.myName[1].innerHTML += key; //just typing
-                if (GC.myName[1].scrollWidth > GC.myName[1].clientWidth){
-                    GC.myName[1].innerHTML = GC.myName[1].innerHTML.substring(0, GC.myName[1].innerHTML.length-1);
-                }
-            }
-            if (GC.myName[0] === 0){ // next keypress after entering name reverts to welcome message
-                GC.typeLock = true;
-                setTimeout(a=> GC.typeLock = false, 1000);
-                GC.gameOver.className = "hidden";
-                GC.welcome.className = "";
-                GC.difficulty = 0;
-                return
-            }
-            if (e.keyCode === 13) { //keycode 13 is enter
-                if (GC.myName[1].innerHTML !== "ENTER YOUR NAME" && GC.myName[1].innerHTML !== ""){ //submit name if not blank or default
-                    GC.typeLock = true;
-                    const trimmed = {"id": Date.now(),
-                                     "name": GC.myName[1].innerText.trim(),
-                                     "score": GC.score}
-                    sendScore(trimmed);
-                    GC.myName[1].className = "";
-                    GC.myName[0] = 0;
-                    setTimeout(a=> GC.typeLock = false, 1000) //lock out typing for 1 sec.
-                }
-                else alert("I said enter your name!");
-            }
-            if (e.keyCode === 8) { //keycode 8 is backspace... this enables backspace... to... backspace...
-                GC.myName[1].innerHTML = GC.myName[1].innerHTML.substring(0, GC.myName[1].innerHTML.length-1);
-            }   
+}
+function scoresTyping(e) {
+    let key = e.key.length === 1 ? e.key : '';
+    let letter = e.key.length === 1 && e.key.match(/[a-z 0-9A-Z_-]/i) ? true : false;
+    if (GC.myName[1].innerHTML === "ENTER YOUR NAME" && letter){
+        GC.myName[1].innerHTML = key; //overwrite "ENTER YOUR NAME" with first valid keystroke
+    }
+    else{
+        GC.myName[1].innerHTML += key; //just typing
+        if (GC.myName[1].scrollWidth > GC.myName[1].clientWidth){
+            GC.myName[1].innerHTML = GC.myName[1].innerHTML.substring(0, GC.myName[1].innerHTML.length-1);
         }
-        else{ // WELCOME menu
-            let key = (a => {
-                return e.key.length === 1 && e.key.match(/[a-zA-Z_-]/i) ? e.key.toLowerCase() : ''
-            })()
-            GC.input.value += key;
-            if (e.keyCode === 13) { //enter
-                startGame(GC.input.value);
-            }
-            if (e.keyCode === 8) { //backspace
-                GC.input.value = GC.input.value.substring(0, GC.input.value.length-1);
-            }
+    }
+    if (GC.myName[0] === 0){ // next keypress after entering name reverts to welcome message
+        GC.typeLock = true;
+        setTimeout(a=> GC.typeLock = false, 1000);
+        GC.gameOver.className = "hidden";
+        GC.welcome.className = "";
+        GC.difficulty = 0;
+        return
+    }
+    if (e.keyCode === 13) { //keycode 13 is enter
+        if (GC.myName[1].innerHTML !== "ENTER YOUR NAME" && GC.myName[1].innerHTML !== ""){ //submit name if not blank or default
+            GC.typeLock = true;
+            const trimmed = {"id": Date.now(),
+                                "name": GC.myName[1].innerText.trim(),
+                                "score": GC.score}
+            sendScore(trimmed);
+            GC.myName[1].className = "";
+            GC.myName[0] = 0;
+            setTimeout(a=> GC.typeLock = false, 1000) //lock out typing for 1 sec.
         }
+        else alert("I said enter your name!");
+    }
+    if (e.keyCode === 8) { //keycode 8 is backspace... this enables backspace... to... backspace...
+        GC.myName[1].innerHTML = GC.myName[1].innerHTML.substring(0, GC.myName[1].innerHTML.length-1);
+    }   
+}
+function menuTyping(e){
+    let key = (a => {
+        return e.key.length === 1 && e.key.match(/[a-zA-Z_-]/i) ? e.key.toLowerCase() : ''
+    })()
+    GC.input.value += key;
+    if (e.keyCode === 13) { //enter
+        startGame(GC.input.value);
+    }
+    if (e.keyCode === 8) { //backspace
+        GC.input.value = GC.input.value.substring(0, GC.input.value.length-1);
     }
 }
 function move(word) {

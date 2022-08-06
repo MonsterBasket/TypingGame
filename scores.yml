@@ -2,6 +2,6 @@
 raw: 0.9
 endpoint: GET
 code: rql
-codeFile: ./scores.rql
+codeFile: scores.rql
 format: json
 computeClass: normal

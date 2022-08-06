@@ -65,7 +65,14 @@ const backupWords = ['ant', 'box', 'car', 'dog', 'egg', 'fog', 'gin', 'hot', 'ic
     'atom', 'bare', 'cave', 'dire', 'epic', 'fate', 'goal', 'heat', 'iron', 'joke', 'kept', 'list', 'made', 'note', 'ouch', 'play', 'quit', 'rest', 'sell', 'told', 'unit', 'volt', 'wind', 'xray', 'yarn', 'zeus',
     'apart', 'bring', 'close', 'delve', 'ember', 'finch', 'ghost', 'heart', 'ideal', 'joint', 'knife', 'level', 'moist', 'noise', 'ounce', 'proud', 'quiet', 'rapid', 'solid', 'teach', 'under', 'voice', 'whale', 'xenon', 'yacht', 'zebra',
     'aurora', 'bright', 'create', 'docile', 'earned', 'finder', 'golden', 'honest', 'ironic', 'joking', 'knight', 'lowest', 'modest', 'novice', 'orient', 'played', 'quoted', 'reward', 'spoilt', 'taught', 'undone', 'violet', 'whisky', 'xanadu', 'yellow', 'zenith'];
-window.addEventListener("keydown", typing);
+window.addEventListener("keydown", e => {
+    if (GC.typeLock) return
+    if(e.keyCode == 32) {
+        e.preventDefault();
+      }
+    if (GC.playing){
+        playTyping();
+});
 
 function getOrientation() {
     switch (true) {
@@ -412,7 +419,7 @@ function scoreDown() {
     GC.score--;
 }
 function loadScores() {
-    return fetch("https://monsterbasket.github.io/TypingGame/db.json/scores")
+    return fetch("https://monsterbasket.github.io/TypingGame/scores.json")
         .then(resp => resp.json())
         .then(json => {
             GC.highScores = [];
@@ -440,7 +447,7 @@ function loadScores() {
         })
 }
 function sendScore(score) {
-    return fetch("https://monsterbasket.github.io/TypingGame/db.json/scores", {
+    return fetch("https://monsterbasket.github.io/TypingGame/scores.json", {
         method: "POST",
         headers: {
             "Content-Type": "application/json",

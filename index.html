@@ -9,7 +9,7 @@
     <link rel="icon" type="image/x-icon" href="./favicon.ico">
     <title>Typing Game - Good Titles Are For Suckers</title>
 </head>
-<body>
+<body autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
     <!--
         Also need to house the game in a pretty container with appropriate levels
         of HTML and CSS
@@ -20,7 +20,7 @@
         <div id="game"></div>
         <div id="welcome">
             <h4>Press Enter to start, or type your own theme!</h4>
-            <input type="text" id="input"><div></div>
+            <input type="text" id="input">
         </div>
         <div id="gameOver" class="hidden">
             <h2>Game Over!</h2>
@@ -38,6 +38,7 @@
         <div id="error" class="hidden"></div>
         <div id="rule" class ="hidden"></div>
         <p id="attribution"></p>
+        <input type="text" id="phoneCover">
     </div>
 </body>
 </html>

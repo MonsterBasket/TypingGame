@@ -257,13 +257,19 @@ h2{
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+    caret-color: transparent;
 }
-#input + div{
-    display: block;
+#phoneCover{
     position: absolute;
     top: 0px;
-    width:100%;
-    height:100%;
+    left: 0px;
+    color: transparent;
+    background: transparent;
+    border: none;
+    width: 100%;
+    height: 100%;
+    caret-color: transparent;
+    cursor: default;
 }
 #roundDiv{
     flex-flow: column;

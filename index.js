@@ -494,7 +494,7 @@ function loadScores() {
                 }
             }
             GC.myName = [1,document.querySelector(".scoreInput")]; 
-            GC.scores.scrollTo(0,GC.myName[1].offsetTop - GC.scores.offsetTop - GC.scores.offsetHeight - 10);
+            GC.scores.scrollTo(0,GC.myName[1].offsetTop - GC.scores.offsetTop - GC.scores.offsetHeight + GC.myName[1].offsetHeight + 8);
         })
         .catch(err => console.log("loading scores failed:", JSON.stringify(err.message)));
 }

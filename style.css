@@ -195,6 +195,7 @@ h2{
 }
 #scores{
     overflow-y: auto;
+    z-index: 2;
     height: 275px;
     padding-top: 10px;
     -ms-overflow-style: none; /*IE and Edge*/

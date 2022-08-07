@@ -8,11 +8,11 @@
 // - starting slowly, and shorter words (3-5 letters).
 // - as time progresses, words will appear faster and be longer in length
 
-//3. scoring
+//3. scoring - COMPLETE
 // - additional points for correct letters, minus points for missing letters?
 // - record accuracy (total correct / total typed) and longest streak
 
-//4. high scores (optional) - COMPLETE (local server)
+//4. high scores (optional) - COMPLETE
 // - save top scores to a server, just enter your name when you finish a round and make the top 10
 
 //5. technical - COMPLETE
@@ -20,7 +20,7 @@
 // - a word is pressed that locks the user onto that word until the word is complete - it may be as simple
 // - as saving a reference to that word into a "target" variable?
 
-//6. Next level - partially complete; no change of themes between rounds.
+//6. Next level - partially complete; no change of themes between rounds - however it's not such a bad thing, games aren't very long, you don't want distractions between rounds.
 // - Every 3? levels the user can pick a new theme.  Three options will float around in the middle of the screen
 // - user can't die on this stage (game is essentially paused) and there is no scoring.  Type the name of the
 // - theme to choose, this will trigger a new background image and word list.
@@ -73,10 +73,10 @@ class Word {
 window.addEventListener("keydown", typeSelect)
 function typeSelect (e){
     // ------------- testing purposes only - difficulty change
-    //if (e.key >= 49 && e.key <= 57) GC.difficulty = e.key;
+    if (e.key >= 1 && e.key <= 9) GC.difficulty = e.key;
     // ---------------------------------------
     if (GC.typeLock) return
-    if(e.keyCode == 32) {
+    if(e.keyCode == 32) { //spacebar - this prevents page scroll when space is pressed
         e.preventDefault();
       }
     if (GC.playing){
@@ -227,7 +227,6 @@ function gameOver(){
     GC.streakSpan.innerText = (GC.longStreak || GC.streak);
     GC.wordsSpan.innerText = GC.wordCount;
     GC.gameOver.className = ""; //put a timeout on this once I implement explode animation
-    GC.phoneCover.style.display = "none";
     GC.rule.className = "hidden";
     GC.playing = false;
     for (const key in GC.enemyWords) {
@@ -277,7 +276,7 @@ function createWord() {
 function playTyping(e) {
     GC.keyCount[0]++;
     let key = (a => {
-        return e.key.length === 1 && e.key.match(/[a-z A-Z_-]/i) ? e.key.toLowerCase() : ''
+        return e.key.length === 1 && e.key.match(/[a-z 0-9A-Z_-]/i) ? e.key.toLowerCase() : ''
     })()
     if (!key) return //if non-letter typed, exit function.
     if (!GC.target.word) {  // check if Game Controller has a current target
@@ -330,7 +329,6 @@ function scoresTyping(e) {
         setTimeout(a=> GC.typeLock = false, 1000);
         GC.gameOver.className = "hidden";
         GC.welcome.className = "";
-        GC.phoneCover.style.display = "block";
         GC.difficulty = 0;
         return
     }

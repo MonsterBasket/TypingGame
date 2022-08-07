@@ -73,7 +73,7 @@ class Word {
 window.addEventListener("keydown", typeSelect)
 function typeSelect (e){
     // ------------- testing purposes only - difficulty change
-    if (e.key >= 1 && e.key <= 9) GC.difficulty = e.key;
+    // if (e.key >= 1 && e.key <= 9) GC.difficulty = e.key;
     // ---------------------------------------
     if (GC.typeLock) return
     if(e.keyCode == 32) { //spacebar - this prevents page scroll when space is pressed
@@ -225,7 +225,7 @@ function gameOver(){
     GC.scoreSpan.innerText = GC.score;
     GC.accuracySpan.innerText = (Math.round((GC.keyCount[1]/GC.keyCount[0] * 100) * 100) / 100 || 0)+"%";
     GC.streakSpan.innerText = (GC.longStreak || GC.streak);
-    GC.wordsSpan.innerText = GC.wordCount;
+    GC.wordsSpan.innerText = GC.totalWords;
     GC.gameOver.className = ""; //put a timeout on this once I implement explode animation
     GC.rule.className = "hidden";
     GC.playing = false;
@@ -487,10 +487,10 @@ function loadScores() {
             GC.scores.innerHTML = "";
             for (let i = 0; i < GC.highScores.length; i++) {
                 if (i === GC.index){
-                    GC.scores.innerHTML += `<div><span class="scoreInput">ENTER YOUR NAME</span><span>${GC.highScores[i].score}</span></div>`
+                    GC.scores.innerHTML += `<div><span>${i+1}:</span><span class="scoreInput">ENTER YOUR NAME</span><span>${GC.highScores[i].score}</span></div>`
                 }
                 else{
-                    GC.scores.innerHTML += `<div><span>${GC.highScores[i].name}</span><span>${GC.highScores[i].score}</span></div>`
+                    GC.scores.innerHTML += `<div><span>${i+1}:</span><span>${GC.highScores[i].name}</span><span>${GC.highScores[i].score}</span></div>`
                 }
             }
             GC.myName = [1,document.querySelector(".scoreInput")]; 

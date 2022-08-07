@@ -184,16 +184,22 @@ a:link, a:visited{
 #stats div span:first-of-type{
     text-align: right;
     padding-right: 5px;
-    padding-left: 40px;
+    padding-left: 20px;
 }
 #scores div span:first-of-type{
+    text-align: right;
+    margin-right: 5px;
+    margin-left: 20px;
+}
+#scores div span:nth-of-type(2){
     text-align: left;
     margin-right: 5px;
-    margin-left: 40px;
+    margin-left: 5px;
+    flex: 10;
 }
 #stats div span:last-of-type, #scores div span:last-of-type{
     padding-left: 5px;
-    padding-right: 40px;
+    padding-right: 20px;
     text-align: left;
 }
 #scores{

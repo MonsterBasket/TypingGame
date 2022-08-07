@@ -195,7 +195,7 @@ h2{
 }
 #scores{
     overflow-y: auto;
-    max-height: 275px;
+    height: 275px;
     padding-top: 10px;
     -ms-overflow-style: none; /*IE and Edge*/
     scrollbar-width: none; /*Firefox*/
@@ -288,4 +288,20 @@ h2{
     top: 90%;
     margin: auto;
     width: 50%;
+}
+@media only screen and (max-height: 716px) {
+    #scores::after{
+        display: none;
+    }
+  }
+@media only screen and (max-width: 330px) {
+    #gameOver{
+        max-width: 95%;
+    }
+    #stats div span:first-of-type, #scores div span:first-of-type{
+        padding-left: 5px;
+    }
+    #stats div span:last-of-type, #scores div span:last-of-type{
+        padding-right: 5px;
+    }
 }

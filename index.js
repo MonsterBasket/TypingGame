@@ -180,7 +180,7 @@ function startGame(theme) {
     GC.playing = true;
     GC.streak = 0;
     GC.longStreak = 0;
-    GC.difficulty = 15;
+    GC.difficulty = 0;
     GC.currentWords = "";
     GC.keyCount = [0,0];
     GC.score = 0;
@@ -340,7 +340,8 @@ function scoresTyping(e) {
             const trimmed = {"id": Date.now(),
                                 "name": GC.myName[1].innerText.trim(),
                                 "score": GC.score}
-            sendScore(trimmed);
+            GC.highScores[GC.index] = trimmed;
+            sendScore(GC.highScores);
             GC.myName[1].className = "";
             GC.myName[0] = 0;
             setTimeout(a=> GC.typeLock = false, 1000) //lock out typing for 1 sec.
@@ -415,13 +416,64 @@ function scoreDown() {
     GC.streak = 0;
     GC.score--;
 }
+//#region ------  Leaving this here as a working solution for localhost, because I don't trust my live hosted solution yet!
+// function loadScores() {
+//     return fetch("http://localhost:3000/scores")
+//         .then(resp => resp.json())
+//         .then(json => {
+//             console.log(json);
+//             GC.highScores = [];
+//             for (const score of json) {
+//                 GC.highScores.push(score);
+//             }
+//             GC.highScores.push({name: "ENTER YOUR NAME", score: GC.score})
+//             GC.highScores.sort((a, b) => {
+//                 if (parseInt(a.score) < parseInt(b.score)) return 1;
+//                 if (parseInt(a.score) > parseInt(b.score)) return -1;
+//                 return 0;
+//             });
+//             const index = GC.highScores.findIndex(a => a.name === "ENTER YOUR NAME");
+//             GC.scores.innerHTML = "";
+//             for (let i = 0; i < GC.highScores.length; i++) {
+//                 if (i === index){
+//                     GC.scores.innerHTML += `<div><span class="scoreInput">ENTER YOUR NAME</span> - <span>${GC.highScores[i].score}</span></div>`
+//                 }
+//                 else{
+//                     GC.scores.innerHTML += `<div><span>${GC.highScores[i].name}</span> - <span>${GC.highScores[i].score}</span></div>`
+//                 }
+//             }
+//             GC.myName = [1,document.querySelector(".scoreInput")]; 
+//             GC.scores.scrollTo(0,GC.myName[1].offsetTop - GC.scores.offsetTop - GC.scores.offsetHeight - 10);
+//         })
+//         .catch(err => console.log("loading scores failed:", JSON.stringify(err.message)));
+// }
+// function sendScore(score) {
+//     return fetch(`http://localhost:3000/scores`, {
+//         method: "POST",
+//         headers: {
+//             "Content-Type": "application/json",
+//             "Accept": "application/json"
+//         },
+//         body: JSON.stringify(score)
+//     })
+//         .then(r => {}) //can I just do nothing?
+//         .then(obj => {   })
+//         .catch(err => console.log("update failed: ", JSON.stringify(err.message)));
+// }
+//#endregion--------------------------------------
 function loadScores() {
-    return fetch("http://localhost:3000/scores")
+    fetch("https://api.jsonbin.io/v3/b/62ee69ffe13e6063dc6e3419",{
+        headers:{
+            "X-Master-Key": "$2b$10$b3nuivOWvvuuZDzWp67gieefh7JSr.nAJU3top5mPDlmCqp7kqOxq",
+            "Content-Type": "application/json",
+            "Accept": "application/json"
+        }
+    })
         .then(resp => resp.json())
         .then(json => {
             console.log(json);
             GC.highScores = [];
-            for (const score of json) {
+            for (const score of json.record) {
                 GC.highScores.push(score);
             }
             GC.highScores.push({name: "ENTER YOUR NAME", score: GC.score})
@@ -430,14 +482,14 @@ function loadScores() {
                 if (parseInt(a.score) > parseInt(b.score)) return -1;
                 return 0;
             });
-            const index = GC.highScores.findIndex(a => a.name === "ENTER YOUR NAME");
+            GC.index = GC.highScores.findIndex(a => a.name === "ENTER YOUR NAME");
             GC.scores.innerHTML = "";
             for (let i = 0; i < GC.highScores.length; i++) {
-                if (i === index){
-                    GC.scores.innerHTML += `<div><span class="scoreInput">ENTER YOUR NAME</span> - <span>${GC.highScores[i].score}</span></div>`
+                if (i === GC.index){
+                    GC.scores.innerHTML += `<div><span class="scoreInput">ENTER YOUR NAME</span><span>${GC.highScores[i].score}</span></div>`
                 }
                 else{
-                    GC.scores.innerHTML += `<div><span>${GC.highScores[i].name}</span> - <span>${GC.highScores[i].score}</span></div>`
+                    GC.scores.innerHTML += `<div><span>${GC.highScores[i].name}</span><span>${GC.highScores[i].score}</span></div>`
                 }
             }
             GC.myName = [1,document.querySelector(".scoreInput")]; 
@@ -446,15 +498,16 @@ function loadScores() {
         .catch(err => console.log("loading scores failed:", JSON.stringify(err.message)));
 }
 function sendScore(score) {
-    return fetch(`http://localhost:3000/scores`, {
-        method: "POST",
+    return fetch(`https://api.jsonbin.io/v3/b/62ee69ffe13e6063dc6e3419`, {
+        method: "PUT",
         headers: {
+            "X-Master-Key": "$2b$10$b3nuivOWvvuuZDzWp67gieefh7JSr.nAJU3top5mPDlmCqp7kqOxq",
             "Content-Type": "application/json",
             "Accept": "application/json"
         },
         body: JSON.stringify(score)
     })
-        .then(r => {}) //can I just do nothing?
-        .then(obj => {   })
+        .then(r => r.json())
+        .then(obj => {})
         .catch(err => console.log("update failed: ", JSON.stringify(err.message)));
 }

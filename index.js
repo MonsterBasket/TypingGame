@@ -207,7 +207,7 @@ function newRound(){
         
     }, 2500)
     setTimeout(function loop() {
-        let modifier = GC.difficulty >16 ? 16 : GC.difficulty;
+        let modifier = GC.difficulty >16 ? 16 : GC.difficulty; //caps speed reduction to 1.6 seconds, which means at round 16 words appear every 0-1 second.
         const rand = Math.round(Math.random() * (1000)) + 1600 - modifier * 100; // 1 word every 1.5 seconds, +/- 0.5 seconds.  Base time decreases 100ms for each level of difficulty (that adds up fast!)
         if (!GC.lastWord && GC.playing){ //stop making words after the last word - see first line of createWord.
             createWord();
@@ -242,11 +242,14 @@ function createWord() {
     let topRange = GC.difficulty +3;
     let wordOptions = [];
     do{
-        wordOptions = GC.words.filter(a => a.length > bottomRange-- && a.length <= topRange++) //reduce word list to words of appropriate length for current difficulty
+        wordOptions = GC.words.filter(a => a.length > bottomRange && a.length <= topRange) //reduce word list to words of appropriate length for current difficulty
+        bottomRange--;
+        topRange++;
         for (const letter of GC.currentWords) { //remove words starting with the same letter as any current words
             wordOptions = wordOptions.filter(a => a.charAt(0) !== letter)
         }
     } while (wordOptions.length === 0)
+    console.log(wordOptions);
     //#region ------------- create DOM elements ------------
     const word = document.createElement("div"); 
     const childR = document.createElement("span");
@@ -258,7 +261,7 @@ function createWord() {
     word.appendChild(childR);
     //#endregion -------------------------------------------
     do {
-        childR.innerText = wordOptions[Math.floor(Math.random() * wordOptions.length)]; //I should also sanitize this just to be safe
+        childR.innerText = wordOptions[Math.floor(Math.random() * wordOptions.length)]; 
     } while (GC.enemyWords[childR.innerText.charAt(0)]) //should never happen, but I already had this here from a previous implemenation, just keeps trying again for a new word if there's already a word with the same first letter
     let tempHold = childR.innerText;
     GC.words.splice(GC.words.indexOf(tempHold),1); //removes word from word list

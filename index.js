@@ -226,7 +226,7 @@ function gameOver(){
     GC.accuracySpan.innerText = (Math.round((GC.keyCount[1]/GC.keyCount[0] * 100) * 100) / 100 || 0)+"%";
     GC.streakSpan.innerText = (GC.longStreak || GC.streak);
     GC.wordsSpan.innerText = GC.totalWords;
-    GC.gameOver.className = ""; //put a timeout on this once I implement explode animation
+    setTimeout(a=> GC.gameOver.className = "", 1000); //put a timeout on this once I implement explode animation
     GC.rule.className = "hidden";
     GC.playing = false;
     for (const key in GC.enemyWords) {
@@ -249,7 +249,6 @@ function createWord() {
             wordOptions = wordOptions.filter(a => a.charAt(0) !== letter)
         }
     } while (wordOptions.length === 0)
-    console.log(wordOptions);
     //#region ------------- create DOM elements ------------
     const word = document.createElement("div"); 
     const childR = document.createElement("span");
@@ -306,8 +305,8 @@ function playTyping(e) {
         if (GC.target.childR.innerText.length === 0) { //word is fully typed
             GC.totalWords ++;
             GC.currentWords = GC.currentWords.replace(GC.target.childL.innerText.charAt(0), "")
-            GC.target.childR.className = "";
-            GC.target.childL.className = "postLetters";
+            // GC.target.childR.className = "";
+            // GC.target.childL.className = "postLetters";
             explode(GC.target);
             if (GC.currentWords === "" && GC.lastWord){
                 setTimeout(newRound, 1000);
@@ -366,7 +365,7 @@ function menuTyping(e){
     }
 }
 function move(word) {
-    let speed = 0.09 + GC.difficulty * 0.01; //I found 0.1 to work well as a base, increase by 10% for each level of difficulty
+    let speed = 0.045 + GC.difficulty * 0.005; //I found 0.1 to work well as a base, increase by 10% for each level of difficulty
     if (getOrientation() === "landscape") {
         const wh = window.innerHeight;
         word.style.top = Math.floor(Math.random() * (wh - wh * 0.15)) + wh * 0.05 + "px"; // word spawn range is from top 5% to bottom 10% to make room for Unsplash attribution
@@ -379,7 +378,7 @@ function move(word) {
             if (!GC.playing) {
                 clearInterval(word.timer);
             }
-        }, 17)
+        }, 8)
         //add up and down animation here
     }
     else {
@@ -393,13 +392,31 @@ function move(word) {
             if (!GC.playing) {
                 clearInterval(word.timer);
             }
-        }, 17)
+        }, 8)
         //add left and right animation here
     }
 }
 function explode(target) {
-    //kill the completed word
-    //idea: separate each letter into it's own object
+    target.childL.innerText += target.childR.innerText;
+    target.childR.innerText = "";
+
+    const pos = target.word.getBoundingClientRect();
+    const newPos = {"x": pos.left - ((pos.left - pos.right) * 0.2),
+                  "y": pos.top,
+                  "width": (pos.right - pos.left) * 1.1};
+    const length = target.childL.innerText.length;
+    for (let i = 0; i < target.childL.innerText.length; i++) {
+        let letter = document.createElement("span");
+        GC.game.appendChild(letter);
+        letter.className = "postLetters";
+        letter.innerText = target.childL.innerText.charAt(i);
+        letter.style.left = pos.left + ((newPos.width / length) * i)+"px";
+        letter.style.top = (newPos.y + (Math.random() * 3)-1.5)+"px";
+        // setTimeout(a =>{
+            letter.className = "deadLetters";
+            jump(letter, (i-length / 2)+0.5);
+        // }, 0)
+    }
     clearInterval(target.word.timer);
     target.childL.remove();
     target.childR.remove();
@@ -409,6 +426,56 @@ function explode(target) {
     GC.childR = {};
     GC.childL = {};
     //destroy everything
+}
+function jump(letter, direction){
+    //direction is index from the middle, so a 4 letter word will be -1.5, -0.5, 0.5, 1.5. a 5 letter word will be 2, 1, 0, 1, 2
+    //add a random variance to the direction, but otherwise copy the jump formula from the mario lab and just tone it down.
+
+
+    let ascend = true;
+    let newSide;
+    let newDistance = Math.random() * 5 + 5;
+    if (direction === 0){
+    newSide = Math.random() * 2 - 1;
+    }
+    else{
+    newSide = (Math.random() + 1) * direction;
+    }
+    let angle = newSide;
+    // if (!airborne){
+    // airborne = true;
+    // ascend = true;
+    transition(newDistance, newSide);
+    //}
+    function transition(distance, side){
+        //clearTimeout();
+        let top = parseFloat(letter.style.top, 10);
+        let left = parseFloat(letter.style.left, 10);
+        letter.style.top = `${top - distance}px`;
+        letter.style.left = `${left + side}px`;
+        letter.style.transform = `rotate(${angle * 10}deg)`
+        newSide = side * 0.98;
+        angle = angle + newSide;
+        if (ascend){
+            newDistance = distance * 0.8;
+        }
+        else{
+            newDistance = distance / 0.95;
+        }
+        if (distance - newDistance <= 0.3 && distance > 0){
+            ascend = false;
+            newDistance = -newDistance;
+        }
+        if (top >= window.innerHeight){
+            letter.remove()
+            airborne = false;
+            return;
+        }
+        setTimeout(() => transition(newDistance, newSide), 16)
+        }
+
+
+
 }
 function scoreDown() {
     if (GC.streak > GC.longStreak) {
@@ -472,7 +539,6 @@ function loadScores() {
     })
         .then(resp => resp.json())
         .then(json => {
-            console.log(json);
             GC.highScores = [];
             for (const score of json.record) {
                 GC.highScores.push(score);

@@ -49,8 +49,8 @@ a:link, a:visited{
     position: absolute;
     width: auto;
 }
-.preLetters, .untypedLetters, .typedLetters, .postLetters{
-    display: inline;
+.preLetters, .untypedLetters, .typedLetters{
+    display: inline-block;
     position: relative;
 }
 .preLetters{
@@ -81,9 +81,23 @@ a:link, a:visited{
 .postLetters{
     color: red;
     border-radius: 50px 50px 50px 50px;
+    background: aqua;
     border: solid aqua;
-    border-width: 2px 10px 0px 10px;
+    line-height: 15px;
+    border-width: 2px 3px 0px 3px;
     box-shadow: aqua 0px 0px 6px 1px;
+    position: absolute;
+}
+.deadLetters{
+    border-radius: 50px 50px 50px 50px;
+    border: solid black;
+    border-width: 2px 3px 0px 3px;
+    box-shadow: black 0px 0px 10px 3px;
+    line-height: 15px;
+    color: maroon;
+    background-color: black;
+    transition: border 1s, box-shadow 1s, color 1s, background-color 1s;
+    position: absolute;
 }
 #rule{
     position: absolute;
